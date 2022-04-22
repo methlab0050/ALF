@@ -1,6 +1,7 @@
-//Anime List Format(ALF 3)
+//Anime List Format(ALF 3.1)
 class anime{
     static{
+        this.storage;
         this.list = [];
         this.animeNamelist= [];
         this.alfParse = function (str) {
@@ -56,9 +57,12 @@ class anime{
                     animeobj = this.list[animeRef]
                     break;
                 case 'string':
-                    if(this.animeNamelist.indexOf(animeRef.toLowerCase()) >= 0) {
-                        animeobj = this.list[this.animeNamelist.indexOf(animeRef.toLowerCase())];
-                    };
+                    for (let index = 0; index < this.list.length; index++) {
+                        if((this.animeNamelist[index].includes(animeRef.toLowerCase())) == true) {
+                            animeobj = this.list[index];
+                            break;
+                        };
+                    }
                     break;
             }
             if(episode != -1) {animeobj.episode = episode}
@@ -75,8 +79,13 @@ class anime{
         this.season = Number(season);
         this.info = info;
         this.alf = function() {return `${this.anime}  ${this.info}  ${this.episode} ${this.season}`};
+        this.alias = [this.anime.toLowerCase()]
+        if(this.info.includes(String('\\'))) {
+            let r = this.info.slice(this.info.indexOf('\\') + 1).toLowerCase().split(',').map((x) => {return x.trimEnd().trimStart()})
+            this.alias = [...this.alias, ...r]
+        };
         anime.list = [...anime.list, this];
-        anime.animeNamelist = [...anime.animeNamelist, animeName.toLowerCase()];
+        anime.animeNamelist = [...anime.animeNamelist, this.alias];
         document.cookie = anime.alfFormat();
     };
 };
