@@ -55,7 +55,7 @@ Lists are stored in cookies, but can be downloaded as text files
     Stores season given in constructor, can be changed by use of anime.search() static property
 - #### this.alias  
     Stores all anime names/aliases of the object, from info to anime property; can be changed indirectly by use of anime.search() static property. 
-    For more information, see [Adding aliases to anime object][]
+    For more information, see [Adding aliases to anime object](https://github.com/methlab0050/ALF/edit/main/README.md#adding-aliases-to-anime-object).
 
 ### Adding animes to your list  
 To add an anime to your list, you can use the following two methods:  
