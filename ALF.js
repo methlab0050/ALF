@@ -1,38 +1,31 @@
-//Anime List Format(ALF 3.2)
+//Anime List Format(ALF 3.2.1)
 class store{
-    static{
-        this.anime = class{
-            static{
-                this.get = function() {
-                    return localStorage.getItem("ALF")
-                }
-                this.set = function(data) {
-                    localStorage.setItem("ALF", data)
-                }
-            }
-        }
-        this.favorites = class{
-            static{
-                this.get = function() {
-                    return localStorage.getItem("favorites")
-                }
-                this.set = function(data) {
-                    localStorage.setItem("favorites", data)
-                }
-            }
-        }
-        this.timeStamp = class{
-            static{
-                this.get = function() {
-                    return localStorage.getItem("favorites")
-                }
-                this.set = function(data) {
-                    localStorage.setItem("favorites", data)
-                }
-            }
-        }
+    constructor(name, setMethod, getMethod) {
+        this.get = getMethod
+        this.set = setMethod
+        store.__proto__[name] = this
     }
 }
+function storeconfig() {
+    //this is only in a function because normal brackets don't close in vscode
+    new store(
+        "anime",
+        (data) => {localStorage.setItem("ALF", data)},
+        () => {return localStorage.getItem("ALF")}
+    )
+    new store(
+        "favorites",
+        (data) => {localStorage.setItem("favorites", data)},
+        () => {return localStorage.getItem("favorites")}
+    )
+    new store(
+        "favoriteAll",
+        (data) => {localStorage.setItem("favoriteAll", data)},
+        () => {return localStorage.getItem("favoriteAll")}
+    )
+}
+storeconfig()
+
 class anime{
     static{
         this.list = [];
@@ -89,6 +82,7 @@ class anime{
             switch (typeof(animeRef)) {
                 case 'number':
                     animeobj = this.list[animeRef]
+                    animepointer = animeRef
                     break;
                 case 'string':
                     for (let index = 0; index < this.list.length; index++) {
@@ -114,7 +108,7 @@ class anime{
             let animepointer = this.find(animeRef)[1]
             anime.list = [...anime.list.slice(0, animepointer),...anime.list.slice(animepointer + 1, anime.list.length)]
         }
-
+  
         if(store.anime.get() !== null){this.alfParse(store.anime.get())};
     };
     constructor(animeName, info = 'watching', episode = 0, season = 1) {
@@ -146,6 +140,7 @@ class anime{
 class fav{
     static{
         this.list = []
+        this.autoAll = (store.favoriteAll.get() == undefined)?false:store.favoriteAll.get();
         this.add = function(name) {
             new fav(name)
         }
@@ -155,25 +150,39 @@ class fav{
                 new fav(no[index])
             }
         }
-        function garglechomp(name) {
+        this.all = function() {
+            for (let index = 0; index < anime.list.length; index++) {
+                new fav(index)
+            }
+        }
+        function del(name) {
             if(fav.list.includes(name)) {
                 let animepointer = fav.list.indexOf(name)
                 fav.list = [...fav.list.slice(0, animepointer),...fav.list.slice(animepointer + 1, fav.list.length)]
+                delete globalthis.__proto__[String(name).trim().replaceAll(' ', '_')]
+                delete globalthis.__proto__[String(name).trim().replaceAll(' ', '')]
+                delete globalthis.__proto__[anime.list[anime.find(name)[1]].anime.trim().replaceAll(' ', '_')]
+                delete globalthis.__proto__[anime.list[anime.find(name)[1]].anime.trim().replaceAll(' ', '')]
+                for (let index = 0; index < anime.list[anime.find(name)[1]].alias.length; index++) {
+                    delete globalthis.__proto__[anime.list[anime.find(name)[1]].alias[index].trim().replaceAll(' ', '_')]
+                    delete globalthis.__proto__[anime.list[anime.find(name)[1]].alias[index].trim().replaceAll(' ', '')]
+                }
             }
             store.favorites.set(fav.list)
         }
-        this.delete = (name) => {garglechomp(name)}
-        this.remove = (name) => {garglechomp(name)}
-        this.del = (name) => {garglechomp(name)}
+        this.delete = del
+        this.remove = del
+        this.del = del
         if(store.favorites.get() !== null){this.extract(store.favorites.get())};
+        if(this.autoAll == true) {this.all()}
     }
-    constructor(name = '') {
+    constructor(name) {
         if(anime.list[anime.find(name)[1]] !== undefined) {
             fav.list = [...fav.list, name]
             store.favorites.set(fav.list)
             console.log()
-            globalthis.__proto__[name.trim().replaceAll(' ', '_')] = anime.list[anime.find(name)[1]]
-            globalthis.__proto__[name.trim().replaceAll(' ', '')] = anime.list[anime.find(name)[1]]
+            globalthis.__proto__[String(name).trim().replaceAll(' ', '_')] = anime.list[anime.find(name)[1]]
+            globalthis.__proto__[String(name).trim().replaceAll(' ', '')] = anime.list[anime.find(name)[1]]
             globalthis.__proto__[anime.list[anime.find(name)[1]].anime.trim().replaceAll(' ', '_')] = anime.list[anime.find(name)[1]]
             globalthis.__proto__[anime.list[anime.find(name)[1]].anime.trim().replaceAll(' ', '')] = anime.list[anime.find(name)[1]]
             for (let index = 0; index < anime.list[anime.find(name)[1]].alias.length; index++) {
@@ -183,6 +192,7 @@ class fav{
         }
     }
 }
+
 function queued(name) {
     new anime(name, 'queued', 0, 0);
 };
