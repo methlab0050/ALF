@@ -74,6 +74,7 @@ To add an anime to your list, you can use the following two methods:
     Example: anime.alfParse("anime  info  episode season||another anime  information, once again  episode season")
 
 ### Adding aliases to anime object  
-    To add aliases to an anime, add two back slashes at the end of your anime info, and then begin listing aliases, as seen below
+    
+    To add aliases to an anime, add two back slashes at the end of your anime info, and then begin listing aliases, as seen below  
     anime.alfParse("anime  info\\other, names, for, this, anime  episode season")
     new anime("name", "info\\anime names can have spaces, but not commas", episode, season)
