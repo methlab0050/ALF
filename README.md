@@ -1,5 +1,7 @@
 # ALF
 
+*this README is deprecated*
+
 yo so
 ALF stands for anime list format
 It stores three main parts; the name, info on the anime, and then it stores the season and episode together
