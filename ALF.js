@@ -60,47 +60,51 @@ class anime{
 
 const ALF = {
     storage:{
-        get:()=>{localStorage.getItem('anime_list')},
+        get:()=>localStorage.getItem('anime_list'),
         set:write=>{localStorage.setItem('ALF',write)},
     },
-    load:function(to_list = anime_list) {
+    load:function(to_list = undefined) {
         this.parse(this.storage.get(), to_list)
     },
     save:function(data = anime_list) {
         this.storage.set(this.stringify(data))
     },
 
-    parse:function(data, to_list = anime_list) {
+    parse:function(data, to_list = undefined) {
+        let store = [to_list ?? anime_list]
         data.split('||').map(line=>{
-            let [name, info, ep, season] = line.split('  ')
-            new anime(name, info, ep, season, to_list)
+            let [name, info, ep_and_season] = line.split('  ')
+            let [ep, season] = ep_and_season.split(' ')
+            new anime(name, info, ep, season, store[0])
         })
     },
-    stringify:function(data = anime_list) {
-        return data.map(anime=>anime.toALF()).join('').slice(0, -2)
+    stringify:function(data = undefined) {
+        let store = [to_list ?? anime_list]
+        return store[0].map(anime=>anime.toALF()).join('').slice(0, -2)
     },
 
-    find:function(name_or_id, in_list = anime_list) {
-        name_or_id = name_or_id.trim().toLowerCase()
+    find:function(name_or_id, in_list = undefined) {
+        let store = [in_list ?? anime_list]
         let index = undefined
         let anime = undefined
         switch(typeof name_or_id) {
             case 'string':
-                for (const i in in_list) {
+                for (const i in store[0]) {
+                    name_or_id = name_or_id?.trim()?.toLowerCase()
                     if(
-                        (in_list[i].aliases.includes(name_or_id))
+                        (store[0][i].aliases.includes(name_or_id))
                         || 
-                        (in_list[i].name.toLowerCase() == name_or_id)
+                        (store[0][i].name.toLowerCase() == name_or_id)
                     ) {
                         index = i
-                        anime = in_list[i]
+                        anime = store[0][i]
                         break
                     }
                 }
             break
             case 'number':
                 index = name_or_id
-                anime = in_list[name_or_id]
+                anime = store[0][name_or_id]
             break
             default:
                 console.error('invalid input') //TODO: make this a proper error
@@ -108,35 +112,34 @@ const ALF = {
         }
         return [index, anime]
     },
-    change:function(name, ep = null, season = null, info = null, from_list = anime_list) {
-        let anime = this.find(name, from_list)[1]
+    change:function(name, ep = null, season = null, info = null, from_list = undefined) {
+        let store = [from_list ?? anime_list]
+        let anime = this.find(name, store[0])[1]
         if(ep != null) anime.e(ep);
         if(season != null) anime.s(season);
         if(info != null) anime.i(info);
+        return anime
     },
-    delete:function(name, from_list = anime_list) {
-        let anime = this.find(name, from_list)[1]
-        from_list.map(x => {
-            if(x != anime) {
-                return x
-            }
-        })
-        
+    del:function(name_or_id, from_list = undefined) {
+        let store = [from_list ?? anime_list]
+        let anime_index = this.find(name_or_id, store[0])[0]
+        store[0].splice(anime_index, 1)
     },
 
-    log:function(from_list = anime_list) {
-        console.table(anime_list, ['name', 'info', 'ep', 'season'])
+    log:function(list = anime_list) {
+        console.table(list, ['name', 'info', 'ep', 'season'])
     },
 }
 
 const archive = {
     storage:{
-        get:()=>{localStorage.getItem('archive')},
+        get:()=>localStorage.getItem('archive'),
         set:write=>{localStorage.setItem('archive',write)},
     },
     undo:function(name, to_list = anime_list) {
         let intermediate_string = this.storage.get()
-        intermediate_string.split('\n')
+        intermediate_string
+        .split('\n')
         .map(line=>{
             if(JSON.parse(line).name == name) {
                 let {name, info, ep, season} = JSON.parse(line)
@@ -166,10 +169,11 @@ const archive = {
     }
 }
 
-const fav = {
-    orites:{},
+
+let fav = {
+    s:{},
     storage:{
-        get:()=>{localStorage.getItem('fav')},
+        get:()=>localStorage.getItem('fav'),
         set:write=>{localStorage.setItem('fav',write)},
     },
     load:function() {
@@ -178,11 +182,6 @@ const fav = {
             window[name] = ALF.find(name)[1]
         })
     },
-    add:function(name, list = anime_list) {
-        this.orites[name] = name
-        window[name] = ALF.find(name, list)[1]
-        this.storage.set(this.storage.get() + '\n' + name)
-    },
     remove:function(name) {
         delete this.orites[name]
         delete window[name]
@@ -190,7 +189,13 @@ const fav = {
     },
     all:function(from_list = anime_list) {
         for (const anime in from_list) {
-            this.add(from_list[anime].name)
+            fav(from_list[anime].name)
         }
     },
+}
+
+fav.__proto__ = function (name, list = anime_list) {
+    fav.orites[name] = name
+    window[name] = ALF.find(name, list)[1]
+    fav.storage.set(fav.storage.get() + '\n' + name)
 }
